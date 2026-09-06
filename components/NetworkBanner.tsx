@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
 
-type BannerState = 'offline' | 'syncing' | 'synced' | 'hidden';
+type BannerMode = 'offline' | 'syncing' | 'synced' | 'hidden';
 
 interface Props {
   isOnline: boolean;
@@ -12,51 +12,48 @@ interface Props {
 }
 
 /**
- * Banner hiển thị trạng thái mạng và đồng bộ.
- * Ẩn khi đang online và không có gì cần đồng bộ.
+ * Banner trạng thái mạng — Offline / Đang đồng bộ / Thành công.
+ * Slide xuất hiện từ trên cùng màn hình.
  */
 export function NetworkBanner({ isOnline, isSyncing, pendingCount }: Props) {
-  const slideAnim = useRef(new Animated.Value(-56)).current;
-  const stateRef = useRef<BannerState>('hidden');
+  const [mode, setMode] = useState<BannerMode>('hidden');
+  const slideAnim = useRef(new Animated.Value(-50)).current;
+  const prevModeRef = useRef<BannerMode>('hidden');
 
-  const show = () => {
-    Animated.spring(slideAnim, {
-      toValue: 0,
-      useNativeDriver: true,
-      tension: 100,
-      friction: 10,
-    }).start();
-  };
+  // Hiển thị banner slide xuống
+  const show = () =>
+    Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 100, friction: 10 }).start();
 
-  const hide = (delay = 0) => {
-    setTimeout(() => {
-      Animated.timing(slideAnim, {
-        toValue: -56,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    }, delay);
-  };
+  // Ẩn banner slide lên
+  const hide = (delay = 0) =>
+    setTimeout(
+      () => Animated.timing(slideAnim, { toValue: -50, duration: 300, useNativeDriver: true }).start(),
+      delay
+    );
 
   useEffect(() => {
     if (!isOnline) {
-      stateRef.current = 'offline';
+      setMode('offline');
       show();
     } else if (isSyncing) {
-      stateRef.current = 'syncing';
+      setMode('syncing');
       show();
-    } else if (stateRef.current === 'syncing') {
-      stateRef.current = 'synced';
-      // Giữ banner "Đồng bộ thành công" 2.5 giây rồi ẩn
-      hide(2500);
-      setTimeout(() => { stateRef.current = 'hidden'; }, 3000);
+    } else if (prevModeRef.current === 'syncing') {
+      // Vừa xong sync → hiện "Thành công" 2.5s rồi ẩn
+      setMode('synced');
+      const t = hide(2500);
+      const t2 = setTimeout(() => setMode('hidden'), 3000);
+      return () => { clearTimeout(t as any); clearTimeout(t2); };
     } else {
-      stateRef.current = 'hidden';
+      setMode('hidden');
       hide();
     }
+    prevModeRef.current = isSyncing ? 'syncing' : isOnline ? 'hidden' : 'offline';
   }, [isOnline, isSyncing]);
 
-  const config: Record<Exclude<BannerState, 'hidden'>, { bg: string; icon: string; text: string }> = {
+  if (mode === 'hidden') return null;
+
+  const config: Record<Exclude<BannerMode, 'hidden'>, { bg: string; icon: string; text: string }> = {
     offline: {
       bg: Colors.error,
       icon: 'cloud-offline-outline',
@@ -76,27 +73,16 @@ export function NetworkBanner({ isOnline, isSyncing, pendingCount }: Props) {
     },
   };
 
-  const current = stateRef.current === 'hidden' ? null : config[stateRef.current];
+  const { bg, icon, text } = config[mode];
 
   return (
     <Animated.View
-      style={[
-        styles.banner,
-        current ? { backgroundColor: current.bg } : {},
-        { transform: [{ translateY: slideAnim }] },
-      ]}
+      style={[styles.banner, { backgroundColor: bg, transform: [{ translateY: slideAnim }] }]}
     >
-      {current && (
-        <View style={styles.row}>
-          <Ionicons
-            name={current.icon as any}
-            size={16}
-            color="#fff"
-            style={stateRef.current === 'syncing' ? styles.spin : undefined}
-          />
-          <Text style={styles.text}>{current.text}</Text>
-        </View>
-      )}
+      <View style={styles.row}>
+        <Ionicons name={icon as any} size={15} color="#fff" />
+        <Text style={styles.text}>{text}</Text>
+      </View>
     </Animated.View>
   );
 }
@@ -123,8 +109,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 13,
     fontWeight: '600',
-  },
-  spin: {
-    // CSS rotation animation — react-native-web hỗ trợ
   },
 });

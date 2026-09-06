@@ -82,7 +82,8 @@ const light = {
   tabBar: '#FFFFFF',
 };
 
-export const Colors = Platform.OS === 'web' ? light : dark;
+export const Colors = Platform.select({ web: light, default: dark }) ?? dark;
+
 
 export const Spacing = {
   xs: 4,
