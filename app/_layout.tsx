@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Platform, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -7,19 +7,24 @@ import { useAuthStore } from '../store/authStore';
 import { useBookingStore } from '../store/bookingStore';
 import { Colors } from '../constants/Colors';
 import { SafariInstallBanner } from '../components/SafariInstallBanner';
+import { NetworkBanner } from '../components/NetworkBanner';
+import { useNetworkMonitor } from '../hooks/useNetworkMonitor';
 
-export default function RootLayout() {
-  const { loadFromStorage, isLoggedIn, isLoading } = useAuthStore();
-  const { loadFromStorage: loadBookings } = useBookingStore();
+function AppWithNetwork() {
+  const { syncPending, pendingSync } = useBookingStore();
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  useEffect(() => {
-    loadFromStorage();
-    loadBookings();
-  }, []);
+  const handleReconnect = async () => {
+    if (pendingSync.length === 0) return;
+    setIsSyncing(true);
+    await syncPending();
+    setIsSyncing(false);
+  };
+
+  const { isOnline } = useNetworkMonitor(handleReconnect);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.bg }}>
-      <StatusBar style={Platform.OS === 'web' ? 'dark' : 'light'} backgroundColor={Colors.bg} />
+    <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
@@ -35,8 +40,33 @@ export default function RootLayout() {
           }}
         />
       </Stack>
-      {/* Hiển thị hướng dẫn cài PWA chỉ khi dùng iOS Safari */}
+
+      {/* Banner đồng bộ mạng — tự động hiện/ẩn theo trạng thái */}
+      <NetworkBanner
+        isOnline={isOnline}
+        isSyncing={isSyncing}
+        pendingCount={pendingSync.length}
+      />
+
+      {/* Hướng dẫn cài PWA trên iOS Safari */}
       <SafariInstallBanner />
+    </>
+  );
+}
+
+export default function RootLayout() {
+  const { loadFromStorage } = useAuthStore();
+  const { loadFromStorage: loadBookings } = useBookingStore();
+
+  useEffect(() => {
+    loadFromStorage();
+    loadBookings();
+  }, []);
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.bg }}>
+      <StatusBar style={Platform.OS === 'web' ? 'dark' : 'light'} backgroundColor={Colors.bg} />
+      <AppWithNetwork />
     </GestureHandlerRootView>
   );
 }
