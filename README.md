@@ -1,5 +1,8 @@
 # VKU Đặt Phòng Học & Lab 📱
 
+[![Demo](https://img.shields.io/badge/🌐_Demo_Live-vku--room--booking.vercel.app-blue?style=for-the-badge)](https://vku-room-booking.vercel.app)
+
+
 Ứng dụng đặt phòng học và phòng lab của Đại học Công nghệ Việt - Hàn (VKU).
 
 ## Tính năng
