@@ -120,7 +120,7 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>{greeting()}, {user?.name?.split(' ').pop()} 👋</Text>
+          <Text style={styles.greeting}>{greeting()}, {user?.name?.split(' ').pop()}</Text>
           <Text style={styles.mssv}>{user?.mssv} • {user?.class}</Text>
         </View>
         <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/room/A101')}>

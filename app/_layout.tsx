@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuthStore } from '../store/authStore';
 import { useBookingStore } from '../store/bookingStore';
 import { Colors } from '../constants/Colors';
+import { SafariInstallBanner } from '../components/SafariInstallBanner';
 
 export default function RootLayout() {
   const { loadFromStorage, isLoggedIn, isLoading } = useAuthStore();
@@ -34,6 +35,8 @@ export default function RootLayout() {
           }}
         />
       </Stack>
+      {/* Hiển thị hướng dẫn cài PWA chỉ khi dùng iOS Safari */}
+      <SafariInstallBanner />
     </GestureHandlerRootView>
   );
 }

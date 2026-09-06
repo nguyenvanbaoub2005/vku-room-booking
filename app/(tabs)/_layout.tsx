@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
@@ -10,6 +11,8 @@ export default function TabsLayout() {
     return <Redirect href="/(auth)/login" />;
   }
 
+  const isWeb = Platform.OS === 'web';
+
   return (
     <Tabs
       screenOptions={{
@@ -20,11 +23,18 @@ export default function TabsLayout() {
           backgroundColor: Colors.tabBar,
           borderTopColor: Colors.border,
           borderTopWidth: 1,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 6,
+          height: isWeb ? 56 : 64,
+          paddingBottom: isWeb ? 4 : 8,
+          paddingTop: isWeb ? 4 : 6,
+          elevation: isWeb ? 0 : 8,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
+        tabBarIconStyle: {
+          marginTop: isWeb ? 2 : 0,
+        },
       }}
     >
       <Tabs.Screen
@@ -32,7 +42,7 @@ export default function TabsLayout() {
         options={{
           title: 'Trang chủ',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+            <Ionicons name="home" size={isWeb ? 22 : size} color={color} />
           ),
         }}
       />
@@ -41,7 +51,7 @@ export default function TabsLayout() {
         options={{
           title: 'Tìm kiếm',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search" size={size} color={color} />
+            <Ionicons name="search" size={isWeb ? 22 : size} color={color} />
           ),
         }}
       />
@@ -50,7 +60,7 @@ export default function TabsLayout() {
         options={{
           title: 'Lịch đặt',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} />
+            <Ionicons name="calendar" size={isWeb ? 22 : size} color={color} />
           ),
         }}
       />
@@ -59,7 +69,7 @@ export default function TabsLayout() {
         options={{
           title: 'Hồ sơ',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+            <Ionicons name="person" size={isWeb ? 22 : size} color={color} />
           ),
         }}
       />
